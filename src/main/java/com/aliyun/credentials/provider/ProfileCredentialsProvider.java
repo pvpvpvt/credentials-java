@@ -68,9 +68,6 @@ public class ProfileCredentialsProvider implements ICredentialsProvider {
         if (AuthConstant.INI_TYPE_ARN.equals(configType)) {
             return getSTSAssumeRoleSessionCredentials(clientConfig, factory);
         }
-        if (AuthConstant.INI_TYPE_KEY_PAIR.equals(configType)) {
-            return getSTSGetSessionAccessKeyCredentials(clientConfig, factory);
-        }
         if (AuthConstant.INI_TYPE_RAM.equals(configType)) {
             return getInstanceProfileCredentials(clientConfig, factory);
         }
@@ -145,32 +142,6 @@ public class ProfileCredentialsProvider implements ICredentialsProvider {
                         .oidcTokenFilePath(OIDCTokenFilePath)
                         .stsRegionId(regionId)
                         .policy(policy)
-                        .build());
-        CredentialModel credential = provider.getCredentials();
-        return CredentialModel.builder()
-                .accessKeyId(credential.getAccessKeyId())
-                .accessKeySecret(credential.getAccessKeySecret())
-                .securityToken(credential.getSecurityToken())
-                .type(credential.getType())
-                .providerName(String.format("%s/%s", this.getProviderName(), credential.getProviderName()))
-                .build();
-    }
-
-    private CredentialModel getSTSGetSessionAccessKeyCredentials(Map<String, String> clientConfig,
-                                                                 CredentialsProviderFactory factory) {
-        String publicKeyId = clientConfig.get(AuthConstant.INI_PUBLIC_KEY_ID);
-        String privateKeyFile = clientConfig.get(AuthConstant.INI_PRIVATE_KEY_FILE);
-        if (StringUtils.isEmpty(privateKeyFile)) {
-            throw new CredentialException("The configured private_key_file is empty.");
-        }
-        String privateKey = AuthUtils.getPrivateKey(privateKeyFile);
-        if (StringUtils.isEmpty(publicKeyId) || StringUtils.isEmpty(privateKey)) {
-            throw new CredentialException("The configured public_key_id or private_key_file content is empty.");
-        }
-        RsaKeyPairCredentialProvider provider = factory.createCredentialsProvider(
-                RsaKeyPairCredentialProvider.builder()
-                        .publicKeyId(publicKeyId)
-                        .privateKey(privateKey)
                         .build());
         CredentialModel credential = provider.getCredentials();
         return CredentialModel.builder()

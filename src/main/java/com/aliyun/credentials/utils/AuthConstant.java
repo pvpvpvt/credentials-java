@@ -17,10 +17,6 @@ public class AuthConstant {
     public static final String INI_TYPE_RAM = "ecs_ram_role";
     public static final String INI_TYPE_ARN = "ram_role_arn";
     public static final String INI_TYPE_OIDC = "oidc_role_arn";
-    public static final String INI_TYPE_KEY_PAIR = "rsa_key_pair";
-    public static final String INI_PUBLIC_KEY_ID = "public_key_id";
-    public static final String INI_PRIVATE_KEY_FILE = "private_key_file";
-    public static final String INI_PRIVATE_KEY = "private_key";
     public static final String INI_ROLE_NAME = "role_name";
     public static final String INI_ROLE_SESSION_NAME = "role_session_name";
     public static final String INI_ROLE_ARN = "role_arn";
@@ -34,7 +30,6 @@ public class AuthConstant {
     public static final String STS = "sts";
     public static final String ECS_RAM_ROLE = "ecs_ram_role";
     public static final String RAM_ROLE_ARN = "ram_role_arn";
-    public static final String RSA_KEY_PAIR = "rsa_key_pair";
     public static final String BEARER = "bearer";
     public static final String OIDC_ROLE_ARN = "oidc_role_arn";
     public static final String CREDENTIALS_URI = "credentials_uri";

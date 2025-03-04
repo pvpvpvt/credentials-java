@@ -108,15 +108,6 @@ public class Client {
                         .connectionTimeout(config.connectTimeout)
                         .readTimeout(config.timeout)
                         .build();
-            case AuthConstant.RSA_KEY_PAIR:
-                return RsaKeyPairCredentialProvider.builder()
-                        .publicKeyId(config.publicKeyId)
-                        .privateKeyFile(config.privateKeyFile)
-                        .durationSeconds(config.roleSessionExpiration)
-                        .stsEndpoint(config.stsEndpoint)
-                        .connectionTimeout(config.connectTimeout)
-                        .readTimeout(config.timeout)
-                        .build();
             case AuthConstant.OIDC_ROLE_ARN:
                 return OIDCRoleArnCredentialProvider.builder()
                         .durationSeconds(config.roleSessionExpiration)

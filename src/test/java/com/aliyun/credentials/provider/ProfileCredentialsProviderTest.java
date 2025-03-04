@@ -311,26 +311,6 @@ public class ProfileCredentialsProviderTest {
         Assert.assertNotNull(createCredential.invoke(profileCredentialsProvider, client, factory));
 
         client.clear();
-        client.put(AuthConstant.INI_TYPE, AuthConstant.INI_TYPE_KEY_PAIR);
-        client.put(AuthConstant.INI_PUBLIC_KEY_ID, AuthConstant.INI_TYPE_KEY_PAIR);
-        client.put(AuthConstant.INI_PRIVATE_KEY, AuthConstant.INI_TYPE_KEY_PAIR);
-        client.put(AuthConstant.INI_PRIVATE_KEY_FILE, AuthConstant.INI_TYPE_KEY_PAIR);
-        AuthUtils.setPrivateKey("test");
-        RsaKeyPairCredentialProvider rsaKeyPairCredentialProvider =
-                Mockito.mock(RsaKeyPairCredentialProvider.class);
-        Mockito.when(rsaKeyPairCredentialProvider.getCredentials()).thenReturn(CredentialModel.builder().build());
-        Mockito.when(factory.createCredentialsProvider(Mockito.any(RsaKeyPairCredentialProvider.class))).
-                thenReturn(rsaKeyPairCredentialProvider);
-        try {
-            createCredential.invoke(profileCredentialsProvider, client, factory);
-            Assert.fail();
-        } catch (Exception e) {
-            String message = e.getCause().getLocalizedMessage();
-            Assert.assertEquals("rsa_key_pair (No such file or directory)", message);
-        }
-        AuthUtils.setPrivateKey(null);
-
-        client.clear();
         client.put(AuthConstant.INI_TYPE, AuthConstant.INI_TYPE_RAM);
         client.put(AuthConstant.INI_ROLE_NAME, AuthConstant.INI_TYPE_KEY_PAIR);
         EcsRamRoleCredentialProvider ecsRamRoleCredentialProvider =
