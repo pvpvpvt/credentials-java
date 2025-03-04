@@ -4,7 +4,6 @@ import com.aliyun.credentials.exception.CredentialException;
 import com.aliyun.credentials.models.CredentialModel;
 import com.aliyun.credentials.utils.AuthConstant;
 import com.aliyun.credentials.utils.AuthUtils;
-import org.ini4j.Wini;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -200,76 +199,6 @@ public class ProfileCredentialsProviderTest {
     }
 
     @Test
-    public void getSTSGetSessionAccessKeyCredentialsTest() throws NoSuchMethodException {
-        ProfileCredentialsProvider provider = new ProfileCredentialsProvider();
-
-        Class<ProfileCredentialsProvider> providerClass = ProfileCredentialsProvider.class;
-        Method createCredential = providerClass.getDeclaredMethod(
-                "createCredential", Map.class, CredentialsProviderFactory.class);
-        createCredential.setAccessible(true);
-        CredentialsProviderFactory factory = new CredentialsProviderFactory();
-        Map<String, String> client = new HashMap<String, String>();
-        client.put(AuthConstant.INI_TYPE, AuthConstant.INI_TYPE_KEY_PAIR);
-        try {
-            createCredential.invoke(provider, client, factory);
-            Assert.fail();
-        } catch (Exception e) {
-            Assert.assertEquals("The configured private_key_file is empty.", e.getCause().getLocalizedMessage());
-        }
-        client.put(AuthConstant.INI_PRIVATE_KEY_FILE, "sads");
-        AuthUtils.setPrivateKey("test");
-        try {
-            createCredential.invoke(provider, client, factory);
-            Assert.fail();
-        } catch (Exception e) {
-            Assert.assertEquals("sads (No such file or directory)",
-                    e.getCause().getLocalizedMessage());
-        }
-
-        client.put(AuthConstant.INI_PUBLIC_KEY_ID, "test");
-        AuthUtils.setPrivateKey(null);
-        try {
-            createCredential.invoke(provider, client, factory);
-            Assert.fail();
-        } catch (Exception e) {
-            Assert.assertEquals("sads (No such file or directory)",
-                    e.getCause().getLocalizedMessage());
-        }
-
-        try {
-            createCredential.invoke(provider, client, factory);
-            Assert.fail();
-        } catch (Exception e) {
-            Assert.assertEquals("sads (No such file or directory)",
-                    e.getCause().getLocalizedMessage());
-        }
-
-
-        String file = ProfileCredentialsProviderTest.class.getClassLoader().
-                getResource("private_key.txt").getPath();
-        client.put(AuthConstant.INI_PUBLIC_KEY_ID, "");
-        client.put(AuthConstant.INI_PRIVATE_KEY_FILE, file);
-        try {
-            createCredential.invoke(provider, client, factory);
-            Assert.fail();
-        } catch (Exception e) {
-            Assert.assertEquals("The configured public_key_id or private_key_file content is empty.",
-                    e.getCause().getLocalizedMessage());
-        }
-
-        client.put(AuthConstant.INI_PUBLIC_KEY_ID, "test");
-        try {
-            createCredential.invoke(provider, client, factory);
-            Assert.fail();
-        } catch (Exception e) {
-            Assert.assertTrue(e.getCause().getLocalizedMessage().contains("InvalidAccessKeyId.NotFound"));
-        }
-
-        AuthUtils.setPrivateKey(null);
-    }
-
-
-    @Test
     public void createCredentialsProviderTest() throws
             NoSuchMethodException, InvocationTargetException, IllegalAccessException, CredentialException {
         ProfileCredentialsProvider profileCredentialsProvider = new ProfileCredentialsProvider();
@@ -312,7 +241,7 @@ public class ProfileCredentialsProviderTest {
 
         client.clear();
         client.put(AuthConstant.INI_TYPE, AuthConstant.INI_TYPE_RAM);
-        client.put(AuthConstant.INI_ROLE_NAME, AuthConstant.INI_TYPE_KEY_PAIR);
+        client.put(AuthConstant.INI_ROLE_NAME, "test");
         EcsRamRoleCredentialProvider ecsRamRoleCredentialProvider =
                 Mockito.mock(EcsRamRoleCredentialProvider.class);
         Mockito.when(ecsRamRoleCredentialProvider.getCredentials()).thenReturn(CredentialModel.builder().build());

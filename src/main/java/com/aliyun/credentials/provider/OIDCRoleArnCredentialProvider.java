@@ -8,6 +8,8 @@ import com.google.gson.Gson;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -118,6 +120,7 @@ public class OIDCRoleArnCredentialProvider extends SessionCredentialsProvider {
         httpRequest.setUrlParameter("Action", "AssumeRoleWithOIDC");
         httpRequest.setUrlParameter("Format", "JSON");
         httpRequest.setUrlParameter("Version", "2015-04-01");
+        httpRequest.setUrlParameter("Timestamp", ParameterHelper.getISO8601Time(new Date()));
         Map<String, String> body = new HashMap<String, String>();
         body.put("DurationSeconds", String.valueOf(durationSeconds));
         body.put("RoleArn", this.roleArn);
@@ -142,7 +145,7 @@ public class OIDCRoleArnCredentialProvider extends SessionCredentialsProvider {
             content.append("=");
             content.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
         }
-        httpRequest.setHttpContent(content.toString().getBytes("UTF-8"), "UTF-8", FormatType.FORM);
+        httpRequest.setHttpContent(content.toString().getBytes(StandardCharsets.UTF_8), "UTF-8", FormatType.FORM);
         httpRequest.setSysMethod(MethodType.POST);
         httpRequest.setSysConnectTimeout(this.connectTimeout);
         httpRequest.setSysReadTimeout(this.readTimeout);

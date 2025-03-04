@@ -65,12 +65,6 @@ public class ClientTest {
         config.type = AuthConstant.RAM_ROLE_ARN;
         config.roleArn = "arn:aws:iam::123456789012:role/test";
         Assert.assertTrue(getProvider.invoke(credential, config) instanceof RamRoleArnCredentialProvider);
-        config.type = AuthConstant.RSA_KEY_PAIR;
-        config.publicKeyId = "test";
-        String file = ProfileCredentialsProviderTest.class.getClassLoader().
-                getResource("private_key.txt").getPath();
-        config.privateKeyFile = file;
-        Assert.assertTrue(getProvider.invoke(credential, config) instanceof RsaKeyPairCredentialProvider);
         config.type = "default";
         try {
             getProvider.invoke(credential, config);
@@ -114,7 +108,7 @@ public class ClientTest {
     }
 
     @Test
-    public void getCredentialTest() throws Exception {
+    public void getCredentialTest() {
         Config config = new Config();
         config.type = (AuthConstant.STS);
         config.accessKeyId = "test";
@@ -123,9 +117,5 @@ public class ClientTest {
         Client credential = new Client(config);
         CredentialModel model = credential.getCredential();
         Assert.assertEquals(AuthConstant.STS, model.getType());
-        config.type = AuthConstant.RSA_KEY_PAIR;
-        config.publicKeyId = "test";
-        config.privateKeyFile = "/test";
-        Assert.assertNull(model.getBearerToken());
     }
 }

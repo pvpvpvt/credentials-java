@@ -1,21 +1,27 @@
 package com.aliyun.credentials.provider;
 
+import java.util.Date;
+import java.util.Map;
+
 import com.aliyun.credentials.api.ICredentials;
 import com.aliyun.credentials.api.ICredentialsProvider;
+import static com.aliyun.credentials.configure.Config.ENDPOINT_SUFFIX;
+import static com.aliyun.credentials.configure.Config.STS_DEFAULT_ENDPOINT;
 import com.aliyun.credentials.exception.CredentialException;
 import com.aliyun.credentials.http.CompatibleUrlConnClient;
 import com.aliyun.credentials.http.HttpRequest;
 import com.aliyun.credentials.http.HttpResponse;
 import com.aliyun.credentials.http.MethodType;
 import com.aliyun.credentials.models.CredentialModel;
-import com.aliyun.credentials.utils.*;
+import com.aliyun.credentials.utils.AuthConstant;
+import com.aliyun.credentials.utils.AuthUtils;
+import com.aliyun.credentials.utils.ParameterHelper;
+import static com.aliyun.credentials.utils.ParameterHelper.hashSHA256;
+import static com.aliyun.credentials.utils.ParameterHelper.hexEncode;
+import com.aliyun.credentials.utils.ProviderName;
+import com.aliyun.credentials.utils.StringUtils;
 import com.aliyun.tea.utils.Validate;
 import com.google.gson.Gson;
-
-import java.util.Map;
-
-import static com.aliyun.credentials.configure.Config.ENDPOINT_SUFFIX;
-import static com.aliyun.credentials.configure.Config.STS_DEFAULT_ENDPOINT;
 
 public class RamRoleArnCredentialProvider extends SessionCredentialsProvider {
 
@@ -125,11 +131,14 @@ public class RamRoleArnCredentialProvider extends SessionCredentialsProvider {
     }
 
     public RefreshResult<CredentialModel> getNewSessionCredentials(CompatibleUrlConnClient client) {
-        ParameterHelper parameterHelper = new ParameterHelper();
         HttpRequest httpRequest = new HttpRequest();
-        httpRequest.setUrlParameter("Action", "AssumeRole");
-        httpRequest.setUrlParameter("Format", "JSON");
-        httpRequest.setUrlParameter("Version", "2015-04-01");
+        String date = ParameterHelper.getISO8601Time(new Date());
+        httpRequest.putHeaderParameter("x-acs-version", "2015-04-01");
+        httpRequest.putHeaderParameter("x-acs-action", "AssumeRole");
+        httpRequest.putHeaderParameter("x-acs-date", date);
+        httpRequest.putHeaderParameter("x-acs-signature-nonce", ParameterHelper.getUniqueNonce());
+        httpRequest.putHeaderParameter("accept", "application/json");
+
         httpRequest.setUrlParameter("DurationSeconds", String.valueOf(durationSeconds));
         httpRequest.setUrlParameter("RoleArn", this.roleArn);
 
@@ -146,15 +155,26 @@ public class RamRoleArnCredentialProvider extends SessionCredentialsProvider {
 
         ICredentials credentials = this.credentialsProvider.getCredentials();
         Validate.notNull(credentials, "Unable to load original credentials from the providers in RAM role arn.");
-        httpRequest.setUrlParameter("AccessKeyId", credentials.getAccessKeyId());
+        httpRequest.putHeaderParameter("x-acs-accesskey-id", credentials.getAccessKeyId());
         if (!StringUtils.isEmpty(credentials.getSecurityToken())) {
-            httpRequest.setUrlParameter("SecurityToken", credentials.getSecurityToken());
+            httpRequest.putHeaderParameter("x-acs-security-token", credentials.getSecurityToken());
         }
-        String strToSign = parameterHelper.composeStringToSign(MethodType.GET, httpRequest.getUrlParameters());
-        String signature = parameterHelper.signString(strToSign, credentials.getAccessKeySecret() + "&");
-        httpRequest.setUrlParameter("Signature", signature);
 
-        httpRequest.setSysUrl(parameterHelper.composeUrl(this.stsEndpoint, httpRequest.getUrlParameters(),
+        try {
+            String datePart = date.substring(0, 10);
+            String formattedDate = datePart.replace("-", "");
+            String hashedRequestPayload = hexEncode(hashSHA256("".getBytes()));
+            httpRequest.putHeaderParameter("x-acs-content-sha256", hashedRequestPayload);
+            httpRequest.putHeaderParameter("Authorization", ParameterHelper.getAuthorization(
+                    "/", "GET",
+                    httpRequest.getUrlParameters(), httpRequest.getSysHeaders(),
+                    hashedRequestPayload, credentials.getAccessKeyId(), credentials.getAccessKeySecret(),
+                    "Sts", ParameterHelper.getRegion(this.stsEndpoint), formattedDate));
+        } catch (Exception e) {
+            throw new CredentialException("Error refreshing credentials from RamRoleArn: " + e);
+        }
+
+        httpRequest.setSysUrl(ParameterHelper.composeUrl(this.stsEndpoint, httpRequest.getUrlParameters(),
                 "https"));
         HttpResponse httpResponse;
         try {
