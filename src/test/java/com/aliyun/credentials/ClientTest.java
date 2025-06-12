@@ -21,10 +21,11 @@ public class ClientTest {
         config.accessKeyId = "123456";
         config.accessKeySecret = "654321";
         Client credential = new Client(config);
-        Assert.assertEquals("123456", credential.getAccessKeyId());
-        Assert.assertEquals("654321", credential.getAccessKeySecret());
-        Assert.assertEquals(AuthConstant.ACCESS_KEY, credential.getType());
-        Assert.assertNull(credential.getSecurityToken());
+        CredentialModel model = credential.getCredential();
+        Assert.assertEquals("123456", model.getAccessKeyId());
+        Assert.assertEquals("654321", model.getAccessKeySecret());
+        Assert.assertEquals(AuthConstant.ACCESS_KEY, model.getType());
+        Assert.assertNull(model.getSecurityToken());
     }
 
     @Test
@@ -64,12 +65,6 @@ public class ClientTest {
         config.type = AuthConstant.RAM_ROLE_ARN;
         config.roleArn = "arn:aws:iam::123456789012:role/test";
         Assert.assertTrue(getProvider.invoke(credential, config) instanceof RamRoleArnCredentialProvider);
-        config.type = AuthConstant.RSA_KEY_PAIR;
-        config.publicKeyId = "test";
-        String file = ProfileCredentialsProviderTest.class.getClassLoader().
-                getResource("private_key.txt").getPath();
-        config.privateKeyFile = file;
-        Assert.assertTrue(getProvider.invoke(credential, config) instanceof RsaKeyPairCredentialProvider);
         config.type = "default";
         try {
             getProvider.invoke(credential, config);
@@ -113,17 +108,14 @@ public class ClientTest {
     }
 
     @Test
-    public void getCredentialTest() throws Exception {
+    public void getCredentialTest() {
         Config config = new Config();
         config.type = (AuthConstant.STS);
         config.accessKeyId = "test";
         config.accessKeySecret = "test";
         config.securityToken = "test";
         Client credential = new Client(config);
-        Assert.assertEquals(AuthConstant.STS, credential.getType());
-        config.type = AuthConstant.RSA_KEY_PAIR;
-        config.publicKeyId = "test";
-        config.privateKeyFile = "/test";
-        Assert.assertNull(credential.getBearerToken());
+        CredentialModel model = credential.getCredential();
+        Assert.assertEquals(AuthConstant.STS, model.getType());
     }
 }

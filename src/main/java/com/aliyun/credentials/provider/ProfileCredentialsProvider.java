@@ -1,5 +1,6 @@
 package com.aliyun.credentials.provider;
 
+import com.aliyun.credentials.api.ICredentialsProvider;
 import com.aliyun.credentials.exception.CredentialException;
 import com.aliyun.credentials.models.CredentialModel;
 import com.aliyun.credentials.utils.*;
@@ -8,7 +9,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ProfileCredentialsProvider implements AlibabaCloudCredentialsProvider {
+public class ProfileCredentialsProvider implements ICredentialsProvider {
     private static volatile Map<String, Map<String, String>> ini;
 
     private static Map<String, Map<String, String>> getIni(String filePath) throws IOException {
@@ -67,9 +68,6 @@ public class ProfileCredentialsProvider implements AlibabaCloudCredentialsProvid
         if (AuthConstant.INI_TYPE_ARN.equals(configType)) {
             return getSTSAssumeRoleSessionCredentials(clientConfig, factory);
         }
-        if (AuthConstant.INI_TYPE_KEY_PAIR.equals(configType)) {
-            return getSTSGetSessionAccessKeyCredentials(clientConfig, factory);
-        }
         if (AuthConstant.INI_TYPE_RAM.equals(configType)) {
             return getInstanceProfileCredentials(clientConfig, factory);
         }
@@ -109,7 +107,7 @@ public class ProfileCredentialsProvider implements AlibabaCloudCredentialsProvid
                         .accessKeySecret(accessKeySecret)
                         .roleArn(roleArn)
                         .roleSessionName(roleSessionName)
-                        .regionId(regionId)
+                        .stsRegionId(regionId)
                         .policy(policy)
                         .build());
         CredentialModel credential = provider.getCredentials();
@@ -142,34 +140,8 @@ public class ProfileCredentialsProvider implements AlibabaCloudCredentialsProvid
                         .roleSessionName(roleSessionName)
                         .oidcProviderArn(OIDCProviderArn)
                         .oidcTokenFilePath(OIDCTokenFilePath)
-                        .regionId(regionId)
+                        .stsRegionId(regionId)
                         .policy(policy)
-                        .build());
-        CredentialModel credential = provider.getCredentials();
-        return CredentialModel.builder()
-                .accessKeyId(credential.getAccessKeyId())
-                .accessKeySecret(credential.getAccessKeySecret())
-                .securityToken(credential.getSecurityToken())
-                .type(credential.getType())
-                .providerName(String.format("%s/%s", this.getProviderName(), credential.getProviderName()))
-                .build();
-    }
-
-    private CredentialModel getSTSGetSessionAccessKeyCredentials(Map<String, String> clientConfig,
-                                                                 CredentialsProviderFactory factory) {
-        String publicKeyId = clientConfig.get(AuthConstant.INI_PUBLIC_KEY_ID);
-        String privateKeyFile = clientConfig.get(AuthConstant.INI_PRIVATE_KEY_FILE);
-        if (StringUtils.isEmpty(privateKeyFile)) {
-            throw new CredentialException("The configured private_key_file is empty.");
-        }
-        String privateKey = AuthUtils.getPrivateKey(privateKeyFile);
-        if (StringUtils.isEmpty(publicKeyId) || StringUtils.isEmpty(privateKey)) {
-            throw new CredentialException("The configured public_key_id or private_key_file content is empty.");
-        }
-        RsaKeyPairCredentialProvider provider = factory.createCredentialsProvider(
-                RsaKeyPairCredentialProvider.builder()
-                        .publicKeyId(publicKeyId)
-                        .privateKey(privateKey)
                         .build());
         CredentialModel credential = provider.getCredentials();
         return CredentialModel.builder()
